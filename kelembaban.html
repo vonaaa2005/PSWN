@@ -83,7 +83,7 @@
 
     // 4. Ambil data dari Firebase tiap 2 detik
     setInterval(() => {
-      db.ref("Sensor/kelembaban").get().then((snapshot) => {
+      db.ref("Hasil_Pembacaan/kelembaban").get().then((snapshot) => {
         const kelembaban = snapshot.val();
         if (kelembaban !== null) {
           updateChart(kelembaban);

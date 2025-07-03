@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Kelembaban Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    canvas {
+      display: block;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="myChart"></canvas>
+
+  <script>
+    // 1. Konfigurasi Firebase (ganti sesuai milikmu)
+    const firebaseConfig = {
+      databaseURL: "https://potensio-1da5e-default-rtdb.firebaseio.com/" // <- GANTI jika perlu
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 2. Inisialisasi Chart.js
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Kelembaban (%)',
+          data: [],
+          borderColor: 'blue',
+          borderWidth: 2,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Waktu (detik)'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Kelembaban (%)'
+            }
+          }
+        }
+      }
+    });
+
+    // 3. Update chart secara berkala
+    let counter = 0;
+
+    function updateChart(value) {
+      const timestamp = counter * 2; // detik
+      chart.data.labels.push(timestamp + "s");
+      chart.data.datasets[0].data.push(value);
+      counter++;
+
+      if (chart.data.labels.length > 8) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+      }
+
+      chart.update();
+    }
+
+    // 4. Ambil data dari Firebase tiap 2 detik
+    setInterval(() => {
+      db.ref("Sensor/kelembaban").get().then((snapshot) => {
+        const kelembaban = snapshot.val();
+        if (kelembaban !== null) {
+          updateChart(kelembaban);
+        }
+      });
+    }, 2000);
+  </script>
+</body>
+</html>
